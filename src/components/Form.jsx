@@ -1,54 +1,76 @@
-import {cloneDeep} from 'lodash/lang';
-import React, {useEffect, useRef, useState} from 'react';
+// SUMMARY: Seem generally about the initialisation of FormIO?
+// SUMMARY: Haven't understand how this is turned into each components.
+import { cloneDeep } from 'lodash/lang';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import EventEmitter from 'eventemitter2';
 import _isEqual from 'lodash/isEqual';
-import {Formio} from '@formio/js';
+import { Formio } from '@formio/js';
 const FormioForm = Formio.Form;
 
 /**
+ * As all parameters are provided as props, 
+ * there is no need to insert parameters for every single function.
  * @param {FormProps} props
  * @returns {JSX.Element}
  */
- const Form = (props) => {
+const Form = (props) => {
   let instance;
   let createPromise;
   let element;
   const [formio, setFormio] = useState(undefined);
   const jsonForm = useRef(undefined);
 
+  // execute a clean-up function, that if formio exists,
+  // it destroy the formio component.
   useEffect(() => () => formio ? formio.destroy(true) : null, [formio]);
 
   const createWebformInstance = (srcOrForm) => {
-    const {options = {}, formioform, formReady} = props;
+    const { options = {}, formioform, formReady } = props;
+    // create a new Form.io form instance (or use a custom formioform if provided).
+    // the second () provide the necessary parameters for initialising the form.
     instance = new (formioform || FormioForm)(element, srcOrForm, options);
+    // set up a promise that resolves when the form is ready.
     createPromise = instance.ready.then(formioInstance => {
+      // set the formioInstance in the component state using setFormio.
       setFormio(formioInstance);
       if (formReady) {
+        // if a formReady callback function is provided,
+        // call it with the formioInstance.
         formReady(formioInstance);
       }
+
+      // return the formioInstance for further use if needed.
       return formioInstance;
     });
 
+    // return the promise representing the readiness of the form instance.
     return createPromise;
   };
 
   const onAnyEvent = (event, ...args) => {
-     if (event.startsWith('formio.')) {
+    if (event.startsWith('formio.')) {
+      // keeps the 'formio.' part with Upper Case,
+      // and the remaining parts represent a camel-cased event name.
       const funcName = `on${event.charAt(7).toUpperCase()}${event.slice(8)}`;
-       // eslint-disable-next-line no-prototype-builtins
+      // eslint-disable-next-line no-prototype-builtins
       if (props.hasOwnProperty(funcName) && typeof (props[funcName]) === 'function') {
+        // invoke the function with the generated function name,
+        // passing additional arguments (`args`).
         props[funcName](...args);
       }
     }
   };
 
   const initializeFormio = () => {
-    const {submission} = props;
+    const { submission } = props;
     if (createPromise) {
+      // attach the onAnyEvent handler to the form instance.
       instance.onAny(onAnyEvent);
+      // wait for createPromise to resolve.
       createPromise.then(() => {
         if (formio && submission) {
+          // if formio and submission exist, set the formio submission.
           formio.submission = submission;
         }
       });
@@ -56,8 +78,9 @@ const FormioForm = Formio.Form;
   };
 
   useEffect(() => {
-    const {src} = props;
+    const { src } = props;
     if (src) {
+      // if src is provided, create or update Form.io instance based on the src.
       createWebformInstance(src).then((formioInstance) => {
         if (formioInstance) {
           formioInstance.src = src;
@@ -68,31 +91,37 @@ const FormioForm = Formio.Form;
   }, [props.src]);
 
   useEffect(() => {
-    const {form, url} = props;
+    const { form, url } = props;
 
     if (form && !_isEqual(form, jsonForm.current)) {
+      // if form prop is provided and has changed (as a whole),
+      // clone and store a deep copy of the form prop.
       jsonForm.current = cloneDeep(form);
       createWebformInstance(jsonForm.current).then((formioInstance) => {
         if (formioInstance) {
+          // if formioInstance exists, update its form and url properties.
           formioInstance.form = jsonForm.current;
           if (url) {
             formioInstance.url = url;
           }
         }
       });
+      // initialise Form.io related configurations.
       initializeFormio();
     }
   }, [props.form]);
 
   useEffect(() => {
-    const {options = {}} = props;
+    const { options = {} } = props;
     if (!options.events) {
+      // if options.events are not provided, 
+      // initialise options.events with the default emitter.
       options.events = Form.getDefaultEmitter();
     }
   }, [props.options]);
 
   useEffect(() => {
-    const {submission} = props;
+    const { submission } = props;
     if (formio && submission && !_isEqual(formio.submission.data, submission.data)) {
       formio.submission = submission;
     }

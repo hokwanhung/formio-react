@@ -8,19 +8,22 @@ import {
   visible,
   layout,
   columns
-} from './fixtures';
+} from './fixtures'; // relies on fixtures folder
 
 import {
   createIfExceed,
   createMount,
   seq
-} from './utils';
+} from './utils'; // relies on utils folder
 
+// begin a test suite with the name 'Form component'
 describe('Form component', function() {
   let mount;
   let options;
 
   beforeEach(() => {
+    // run before each test case.
+    // initialise both mount and options.
     options = {
       events: new EventEmitter({
         wildcard: false,
@@ -31,6 +34,7 @@ describe('Form component', function() {
   });
 
   afterEach(() => {
+    // run after each test case.
     options.events.removeAllListeners();
     mount.cleanUp();
   });
