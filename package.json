@@ -51,7 +51,7 @@
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.6",
     "escope": "^4.0.0",
-    "eslint": "7.29.0",
+    "eslint": "7.32.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-formio": "^1.1.0",
     "eslint-loader": "^4.0.2",
@@ -77,6 +77,12 @@
   "files": [
     "lib"
   ],
+  "overrides": {
+    "enzyme-adapter-react-16": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  },
   "peerDependencies": {
     "@formio/js": "^5.0.0-rc.33",
     "react": "^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.1.0",
